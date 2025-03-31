@@ -1,0 +1,53 @@
+{
+  "LlamaGuard3": {
+    "api_key_variable": "LLAMA_GUARD_API_TOKEN",
+    "prefix": "",
+    "models": {
+      "llama-guard-3-1b": {
+        "guard_type": "llama-guard-3",
+        "custom_categories": [
+          "S1: Violent Crimes.",
+          "S2: Non-Violent Crimes.",
+          "S3: Sex Crimes.",
+          "S4: Child Exploitation.",
+          "S5: Defamation.",
+          "S6: Specialized Advice.",
+          "S7: Privacy.",
+          "S8: Intellectual Property.",
+          "S9: Indiscriminate Weapons.",
+          "S10: Hate.",
+          "S11: Self-Harm.",
+          "S12: Sexual Content.",
+          "S13: Elections."
+        ],
+        "input_types": ["text"],
+        "target": "https://llama-guard-1b.example.com/v1/completions",
+        "target_model_name": "llama-guard-3-1b",
+        "request_timeout": 120
+      },
+      "llama-guard-3-11b": {
+        "guard_type": "llama-guard-3",
+        "custom_categories": [
+          "S1: Violent Crimes.",
+          "S2: Non-Violent Crimes.",
+          "S3: Sex Crimes.",
+          "S4: Child Exploitation.",
+          "S5: Defamation.",
+          "S6: Specialized Advice.",
+          "S7: Privacy.",
+          "S8: Intellectual Property.",
+          "S9: Indiscriminate Weapons.",
+          "S10: Hate.",
+          "S11: Self-Harm.",
+          "S12: Sexual Content.",
+          "S13: Elections.",
+          "S14: Code Interpreter Abuse."
+        ],
+        "input_types": ["text", "image"],
+        "target": "https://llama-guard-11b.example.com/v1/completions",
+        "target_model_name": "llama-guard-3-11b",
+        "request_timeout": 120
+      }
+    }
+  }
+}
