@@ -42,7 +42,7 @@ async def chat_completions(request: ModerationRequest):
                 else:
                     raise HTTPException(status_code=400, detail="Invalid input")
             response_object = {
-                "id": uuid.uuid4(),
+                "id": str(uuid.uuid4()),
                 "model": request.model,
                 "results": results,
             }
