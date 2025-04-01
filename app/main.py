@@ -1,17 +1,14 @@
-import asyncio
-from contextlib import asynccontextmanager
-import os
-from typing import Any, List, Set
 import logging
+import os
+from contextlib import asynccontextmanager
+from typing import Any
+
+from fastapi import FastAPI
 from pythonjsonlogger.json import JsonFormatter
 
-import httpx
-from fastapi import FastAPI, Request, HTTPException
-from fastapi.responses import JSONResponse
-
+from api_v1 import fopp_app as api_v1_app
 from utils import RESERVED_ATTRS
 
-from api_v1 import fopp_app as api_v1_app
 __name__ = "hanseware.fast-openai-protection-proxy"
 
 logger = logging.getLogger(__name__)

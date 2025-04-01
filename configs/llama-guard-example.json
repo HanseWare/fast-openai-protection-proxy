@@ -5,7 +5,7 @@
     "models": {
       "llama-guard-3-1b": {
         "guard_type": "llama-guard-3",
-        "custom_categories": [
+        "categories": [
           "S1: Violent Crimes.",
           "S2: Non-Violent Crimes.",
           "S3: Sex Crimes.",
@@ -27,7 +27,7 @@
       },
       "llama-guard-3-11b": {
         "guard_type": "llama-guard-3",
-        "custom_categories": [
+        "categories": [
           "S1: Violent Crimes.",
           "S2: Non-Violent Crimes.",
           "S3: Sex Crimes.",
