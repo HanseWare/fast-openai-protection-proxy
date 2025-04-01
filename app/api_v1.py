@@ -7,7 +7,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
 
 from fopp_models import ModerationRequest
-from guards_handler import handler as guards
+from guards_handler import handler as guards_handler
 from guards_adapters import get_adapter, LlamaGuard3Adapter
 
 __name__ = "hanseware.fast-openai-protection-proxy.api_v1"
@@ -20,7 +20,7 @@ class FOPP_API_V1(FastAPI):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.base_url = os.getenv("BASE_URL", "http://localhost:8000")
-        for guard_name, guard_config in guards:
+        for guard_name, guard_config in guards_handler.guards.items():
             self.guard_adapters[guard_name] = get_adapter(guard_config)
 
 

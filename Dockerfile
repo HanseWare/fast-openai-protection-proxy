@@ -24,4 +24,4 @@ EXPOSE 8000
 
 # Run the application
 #CMD ["python", "/app/app.py"]
-CMD uvicorn main:app --host $FOPP_HOST --port $FOPP_PORT
+CMD uvicorn main:fopp_app --host $FOPP_HOST --port $FOPP_PORT

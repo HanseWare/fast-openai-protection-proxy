@@ -1,6 +1,6 @@
 from typing import List, Union, Literal, Optional, Dict
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, RootModel
 
 
 class TextInput(BaseModel):
@@ -17,8 +17,8 @@ class ImageInput(BaseModel):
     image_url: ImageUrl
 
 
-class StructuredModerationInput(BaseModel):
-    __root__: Union[TextInput, ImageInput]
+class StructuredModerationInput(RootModel[Union[TextInput, ImageInput]]):
+    pass
 
 
 class ModerationRequest(BaseModel):
