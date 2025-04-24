@@ -30,6 +30,13 @@ class ModerationRequest(BaseModel):
     ]
     output_format: Literal["openai", "llama-guard-3"] = Field(default="openai")
 
+class CompletionRequest(BaseModel):
+    model: Optional[str] = "llama-guard-3-1b"
+    prompt: Union[
+        str,                         # einfacher Text
+        List[str],                   # Liste von Texten
+    ]
+
 class GuardConfigModel(BaseModel):
     guard_type: str
     api_key: Optional[str] = 'ignored'

@@ -1,7 +1,10 @@
+from abc import abstractmethod, ABC
+from copy import deepcopy
 from typing import Dict, Any
 
 import httpx
-from starlette.responses import JSONResponse
+from fastapi import HTTPException
+from fastapi.responses import JSONResponse
 
 from fopp_models import GuardConfigModel
 
@@ -11,10 +14,10 @@ OPENAI_LLAMA_GUARD_CATEGORY_MAPPING = {
     "S3": ["sexual", "harassment", "violence"],
     "S4": ["sexual/minors"],
     "S5": ["harassment"],
-    "S6": [],
-    "S7": [],
-    "S8": [],
-    "S9": ["violence"],
+    "S6": ["illicit"],
+    "S7": ["illicit"],
+    "S8": ["illicit"],
+    "S9": ["illicit/violent"],
     "S10": ["hate", "hate/threatening"],
     "S11": ["self-harm", "self-harm/intent", "self-harm/instructions"],
     "S12": ["sexual"],
@@ -24,6 +27,8 @@ OPENAI_LLAMA_GUARD_CATEGORY_MAPPING = {
 OPENAI_DEFAULT_OUTPUTS = {
     "sexual": False,
     "hate": False,
+    "illicit": False,
+    "illicit_violent": False,
     "harassment": False,
     "self-harm": False,
     "sexual/minors": False,
@@ -38,6 +43,8 @@ OPENAI_DEFAULT_OUTPUTS = {
 OPENAI_DEFAULT_OUTPUT_SCORES = {
     "sexual": 0.0,
     "hate": 0.0,
+    "illicit": 0.0,
+    "illicit_violent": 0.0,
     "harassment": 0.0,
     "self-harm": 0.0,
     "sexual/minors": 0.0,
@@ -52,6 +59,8 @@ OPENAI_DEFAULT_OUTPUT_SCORES = {
 OPENAI_DEFAULT_CATEGORY_APPLIED_INPUT_TYPES = {
     "sexual": ["text"],
     "hate": ["text"],
+    "illicit": ["text"],
+    "illicit/violent": ["text"],
     "harassment": ["text"],
     "self-harm": ["text"],
     "sexual/minors": ["text"],
@@ -71,10 +80,7 @@ def get_adapter(guard_config: GuardConfigModel):
         raise ValueError(f"Guard type {guard_config.guard_type} not supported")
 
 
-class LlamaGuard3Adapter:
-    guard_config: GuardConfigModel
-    openai_safe_result: Dict[str, Any] = {}
-
+class BaseAdapter(ABC):
     def __init__(self, guard_config):
         self.guard_config = guard_config
         self.openai_safe_result = {
@@ -84,12 +90,66 @@ class LlamaGuard3Adapter:
             "category_applied_input_types": OPENAI_DEFAULT_CATEGORY_APPLIED_INPUT_TYPES,
         }
 
-    async def run_llama_guard_moderation(self, messages):
-        return JSONResponse(status_code=501, content={"detail": "Not yet implemented"})
+    @abstractmethod
+    async def run_openai_moderation(self, messages):
+        """
+        Run OpenAI moderation on the given messages.
+        :param messages: List of messages to moderate.
+        :return: Moderation result.
+        """
+        pass
+
+    @abstractmethod
+    async def run_custom_completion(self, messages):
+        """
+        Run custom completion on the given messages.
+        :param messages: List of messages to complete.
+        :return: Completion result.
+        """
+        pass
+
+    @abstractmethod
+    async def run_custom_chat_completion(self, messages):
+        """
+        Run custom chat completion on the given messages.
+        :param messages: List of messages to complete.
+        :return: Completion result.
+        """
+        pass
+
+
+class LlamaGuard3Adapter(BaseAdapter):
+    guard_config: GuardConfigModel
+    openai_safe_result: Dict[str, Any] = {}
+
+    def __init__(self, guard_config):
+        super().__init__(guard_config)
+
+    async def run_custom_completion(self, message):
+        messages = [{"role": "user", "content": message}]
+        prompt = self._prompt_header() + self._prompt_task(
+            "user") + self._prompt_categories() + self._prompt_conversation(messages) + self._promt_end("user")
+        custom_timeout = httpx.Timeout(self.guard_config.request_timeout)
+        headers = {
+            "Content-Type": "application/json"
+        }
+        body = {"model": self.guard_config.target_model_name, "prompt": prompt}
+        client = httpx.AsyncClient(timeout=custom_timeout)
+        response = await client.post(self.guard_config.target, json=body, headers=headers)
+        # response code 200 simply return resp_body["choices"][0]["text"].strip()
+        if response.status_code == 200:
+            resp_body = response.json()
+            return resp_body["choices"][0]["text"].strip()
+        else:
+            raise HTTPException(status_code=response.status_code, detail="Error in custom completion request")
+
+    async def run_custom_chat_completion(self, messages):
+        raise HTTPException(status_code=501, detail="Not yet implemented")
 
     async def run_openai_moderation(self, message):
         messages = [{"role": "user", "content": message}]
-        prompt = self._prompt_header() + self._prompt_task("user") + self._prompt_categories() + self._prompt_conversation(messages) + self._promt_end("user")
+        prompt = self._prompt_header() + self._prompt_task(
+            "user") + self._prompt_categories() + self._prompt_conversation(messages) + self._promt_end("user")
         custom_timeout = httpx.Timeout(self.guard_config.request_timeout)
 
         headers = {
@@ -104,10 +164,9 @@ class LlamaGuard3Adapter:
         if resp_body["choices"][0]["text"].strip().startswith("safe"):
             return self.openai_safe_result
         else:
-            # TODO let the magic happen
             llama_guard_flagged_categories = resp_body["choices"][0]["text"].strip().split("\n")[1].split(",")
             # copy self.openai_safe_response as base for the flagged categories to local variable unsafe_response
-            unsafe_result = self.openai_safe_result.copy()
+            unsafe_result = deepcopy(self.openai_safe_result)
             unsafe_result["flagged"] = True
             # set the flagged categories to True
             for category in llama_guard_flagged_categories:

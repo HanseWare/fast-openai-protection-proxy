@@ -6,7 +6,7 @@ from typing import Any
 from fastapi import FastAPI
 from pythonjsonlogger.json import JsonFormatter
 
-from api_v1 import fopp_app as api_v1_app
+from api_v1 import api_v1_app
 from utils import RESERVED_ATTRS
 
 __name__ = "hanseware.fast-openai-protection-proxy"
